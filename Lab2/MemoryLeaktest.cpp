@@ -1,26 +1,26 @@
-﻿#include "pch.h"
-#include <iostream>
-#include <cstdlib>
+#include "pch.h"
+#include <windows.h>
+#include <psapi.h>
 
-int count = 0;
-const int max = 40;
-
-void* operator new(size_t size) {
-    count++;
-    return malloc(size);
+SIZE_T GetTotalMemory() {
+    PROCESS_MEMORY_COUNTERS_EX pmc;
+    GetProcessMemoryInfo(GetCurrentProcess(), (PROCESS_MEMORY_COUNTERS*)&pmc, sizeof(pmc));
+    return pmc.PrivateUsage;
 }
 
-void operator delete(void* memory) noexcept {
-    count--;
-    free(memory);
-}
-
-TEST(MemoryLeaktest) {
-    count = 0;
-    for (int i = 0; i < max + 1; ++i) {
+void MemoryLeakingFunction() {
+    for (int i = 0; i <= 1000; i++) {
         int* a = new int;
-        if (count > max) {
-            FAIL() << "Memoryleaktest";
-        }
+    }
+}
+TEST(MemoryLeakTest)
+{
+        SIZE_T memoryBefore;
+        SIZE_T memoryAfter;
+    for (int i = 0; i <= 5; i++) {
+        memoryBefore = GetTotalMemory();
+        MemoryLeakingFunction();
+        memoryAfter = GetTotalMemory();
+        EXPECT_LT(memoryBefore, memoryAfter);
     }
 }
